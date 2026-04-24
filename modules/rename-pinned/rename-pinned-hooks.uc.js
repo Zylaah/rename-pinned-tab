@@ -402,10 +402,22 @@
     }
 
     /**
+     * True during browser startup / session restore. We ignore `TabPinned`
+     * events while this is set because Firefox replays them when restoring
+     * pinned tabs.
+     */
+    let startupSuppressPin = true;
+
+    /**
      * @param {import("chrome").BrowserTab} tab
      */
     function onTabPinned(tab) {
       if (!tab) return;
+      if (startupSuppressPin) {
+        markSkip(tab);
+        debugLog("Startup TabPinned ignored (restore)", tab);
+        return;
+      }
       scheduleRename(tab);
     }
 
@@ -475,14 +487,45 @@
     }
 
     /**
-     * `SSTabRestoring` fires once per restored tab before its state is applied;
-     * mark any tab that will be pinned after restore so we don’t re-AI it.
+     * Mark restoring tabs so even post-startup late restores don’t rename.
      */
-    win.addEventListener("SSTabRestoring", (ev) => {
-      const tab = ev.target;
-      if (!isBrowserTab(gBrowser, tab)) return;
-      if (tab.pinned) markSkip(tab);
-    }, true);
+    win.addEventListener(
+      "SSTabRestoring",
+      (ev) => {
+        const tab = ev.target;
+        if (!isBrowserTab(gBrowser, tab)) return;
+        if (tab.pinned) markSkip(tab);
+      },
+      true
+    );
+
+    /**
+     * Release the startup gate once session restore finishes.
+     * Listens to Services observer topics as the primary signal, with a
+     * timeout fallback in case they never fire (e.g. fresh profile).
+     */
+    (function waitForRestoreComplete() {
+      const TOPICS = ["sessionstore-windows-restored", "sessionstore-browser-state-restored"];
+      let released = false;
+      const release = (reason) => {
+        if (released) return;
+        released = true;
+        startupSuppressPin = false;
+        for (const t of TOPICS) {
+          try {
+            Services.obs.removeObserver(obs, t);
+          } catch (_) {}
+        }
+        debugLog(`Startup gate released: ${reason}`);
+      };
+      const obs = { observe: (_s, topic) => release(topic) };
+      try {
+        for (const t of TOPICS) Services.obs.addObserver(obs, t);
+      } catch (e) {
+        debugLog("Observer registration failed:", e);
+      }
+      win.setTimeout(() => release("timeout"), 8000);
+    })();
 
     win.addEventListener("TabPinned", (ev) => {
       const tab = ev.target;
