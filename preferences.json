@@ -19,9 +19,44 @@
   },
   {
     "property": "extensions.zen.rename_pinned_tab.mistral_model",
-    "type": "string",
     "label": "Mistral model",
-    "defaultValue": "mistral-small-latest"
+    "type": "dropdown",
+    "defaultValue": "mistral-small-latest",
+    "description": "Model used for the chat completions API (tab title shortening).",
+    "options": [
+      {
+        "value": "mistral-large-2512",
+        "label": "Mistral Large 3"
+      },
+      {
+        "value": "mistral-medium-2505",
+        "label": "Mistral Medium 3"
+      },
+      {
+        "value": "mistral-small-latest",
+        "label": "Mistral Small Latest"
+      },
+      {
+        "value": "open-mistral-nemo",
+        "label": "Mistral Nemo"
+      },
+      {
+        "value": "ministral-8b-latest",
+        "label": "Ministral 8B"
+      },
+      {
+        "value": "ministral-3b-latest",
+        "label": "Ministral 3B"
+      }
+    ],
+    "conditions": [
+      {
+        "if": {
+          "property": "extensions.zen.rename_pinned_tab.enabled",
+          "value": true
+        }
+      }
+    ]
   },
   {
     "type": "separator",
