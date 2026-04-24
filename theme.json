@@ -2,8 +2,8 @@
   "id": "zen-tidy-pinned-tabs",
   "name": "Tidy Pinned Tabs",
   "description": "Shorten pinned tab titles with Mistral, OpenAI, OpenRouter, Gemini, or local Ollama; Shift+click the tab icon to revert.",
-  "homepage": "https://github.com/YOUR_USERNAME/rename-pinned-tab",
-  "readme": "https://raw.githubusercontent.com/YOUR_USERNAME/rename-pinned-tab/main/README.md",
+  "homepage": "https://github.com/Zylaah/tidy-pinned-tabs",
+  "readme": "https://raw.githubusercontent.com/Zylaah/tidy-pinned-tabs/main/README.md",
   "style": {
     "chrome": "chrome.css"
   },
