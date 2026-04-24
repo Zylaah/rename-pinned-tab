@@ -62,18 +62,44 @@
     }
 
     /**
+     * Zen patches `gBrowser._setTabLabel` to bail out unless `_zenChangeLabelFlag` is set, and
+     * always prefers `tab.zenStaticLabel` for the visible title (manual rename / pinned editor).
+     *
      * @param {import("chrome").BrowserTab} tab
      * @param {string} label
+     * @param {{ revert?: boolean }} [opts]
      */
-    function applyTabLabel(tab, label) {
-      if (typeof gBrowser.setTabTitle === "function") {
-        gBrowser.setTabTitle(tab, label);
+    function applyTabLabel(tab, label, opts = {}) {
+      const { revert = false } = opts;
+      const zenOpts = { _zenChangeLabelFlag: true };
+
+      if (typeof gBrowser._setTabLabel === "function") {
+        if (revert) {
+          delete tab.zenStaticLabel;
+          gBrowser._setTabLabel(tab, label, { isContentTitle: true, ...zenOpts });
+        } else {
+          tab.zenStaticLabel = label;
+          gBrowser._setTabLabel(tab, label, { isContentTitle: false, ...zenOpts });
+        }
+        return;
+      }
+
+      if (revert) {
+        delete tab.zenStaticLabel;
+        if (typeof gBrowser.setTabTitle === "function") {
+          gBrowser.setTabTitle(tab, null);
+        } else {
+          tab.label = label;
+        }
       } else {
-        tab.label = label;
+        tab.zenStaticLabel = label;
+        if (typeof gBrowser.setTabTitle === "function") {
+          gBrowser.setTabTitle(tab, label);
+        } else {
+          tab.label = label;
+        }
       }
-      if (win.gZenPinnedTabManager?.onTabLabelChanged) {
-        win.gZenPinnedTabManager.onTabLabelChanged(tab);
-      }
+      win.gZenPinnedTabManager?.onTabLabelChanged?.(tab);
     }
 
     /**
@@ -177,10 +203,7 @@
 
       tab.classList.add(REVERT_PULSE_CLASS);
       win.requestAnimationFrame(() => {
-        applyTabLabel(tab, state.originalLabel);
-        if (win.gZenPinnedTabManager?.onTabLabelChanged) {
-          win.gZenPinnedTabManager.onTabLabelChanged(tab);
-        }
+        applyTabLabel(tab, state.originalLabel, { revert: true });
         tab.removeAttribute(DATA_ATTR);
         tabState.delete(tab);
         debugLog("Reverted title for tab", tab);
