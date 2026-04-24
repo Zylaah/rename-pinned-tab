@@ -60,8 +60,8 @@
   /* JS sets --zen-ai-label-reveal-ms to track the sparkle sweep */
   clip-path: inset(0 100% 0 0);
   animation:
-    zen-ai-label-reveal-ltr var(--zen-ai-label-reveal-ms, 1050ms) cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    zen-ai-label-shimmer 1.25s ease-in-out forwards;
+    zen-ai-label-reveal-ltr var(--zen-ai-label-reveal-ms, 525ms) cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    zen-ai-label-shimmer 0.625s ease-in-out forwards;
 }
 
 /* Sparkle layer positioned over the label container */

@@ -222,7 +222,7 @@
         Math.max(SPARKLE_MIN, Math.round(width / SPARKLE_WIDTH_DIVISOR))
       );
 
-      const WAVE_MS = 620;
+      const WAVE_MS = 310;
       let maxFinish = 0;
       const frag = document.createDocumentFragment();
 
@@ -241,8 +241,8 @@
             : 48 + Math.random() * 24;
 
         const delay =
-          Math.round(progress * WAVE_MS) + ((Math.random() * 70) | 0);
-        const life = 520 + ((Math.random() * 240) | 0);
+          Math.round(progress * WAVE_MS) + ((Math.random() * 35) | 0);
+        const life = 260 + ((Math.random() * 120) | 0);
         maxFinish = Math.max(maxFinish, delay + life);
 
         const size = 2.5 + Math.random() * 5;
@@ -264,15 +264,15 @@
 
       /* Match text reveal to sparkle wave: dense sweep ~WAVE_MS, trail ~delay+life */
       const revealMs = Math.min(
-        1400,
-        Math.max(820, Math.round(WAVE_MS * 1.12 + maxFinish * 0.38))
+        700,
+        Math.max(410, Math.round(WAVE_MS * 1.12 + maxFinish * 0.38))
       );
       tab.style.setProperty("--zen-ai-label-reveal-ms", `${revealMs}ms`);
 
       layer.appendChild(frag);
       container.appendChild(layer);
 
-      const cleanupMs = maxFinish + 100;
+      const cleanupMs = maxFinish + 50;
       win.setTimeout(() => {
         tab.classList.remove(SPARKLE_CLASS);
         tab.style.removeProperty("--zen-ai-label-reveal-ms");
