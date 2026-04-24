@@ -191,12 +191,71 @@
       delete tab._zenAiRenameRefreshSublabel;
     }
 
+    /**
+     * Sprinkle animated sparkle particles over the tab label.
+     * Creates a short-lived layer of star-shaped spans with randomized
+     * positions, sizes, colors, and delays. Auto-cleans after the animation.
+     * @param {Element} tab
+     */
     function playRenameSparkle(tab) {
+      const container = tab.querySelector(".tab-label-container");
+      if (!container) return;
+
+      const prev = tab._zenAiSparkleLayer;
+      if (prev?.isConnected) prev.remove();
+
       tab.classList.remove(SPARKLE_CLASS);
-      win.requestAnimationFrame(() => {
-        tab.classList.add(SPARKLE_CLASS);
-        win.setTimeout(() => tab.classList.remove(SPARKLE_CLASS), 1300);
-      });
+      tab.classList.add(SPARKLE_CLASS);
+
+      const layer = document.createElement("div");
+      layer.className = "zen-ai-rename-sparkle-layer";
+      container.appendChild(layer);
+      tab._zenAiSparkleLayer = layer;
+
+      const rect = container.getBoundingClientRect();
+      const width = Math.max(60, rect.width || 120);
+      const height = Math.max(14, rect.height || 18);
+
+      const PALETTE = [
+        "#fef3c7", // warm white
+        "#fde68a", // amber
+        "#fbcfe8", // pink
+        "#c4b5fd", // violet
+        "#a5f3fc", // cyan
+        "#ffffff",
+      ];
+
+      const count = Math.min(16, Math.max(9, Math.round(width / 14)));
+      const totalMs = 1400;
+
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement("span");
+        s.className = "zen-ai-sparkle";
+        const size = 3 + Math.random() * 6; // 3–9px
+        const xPct = (i / count) * 100 + (Math.random() * 8 - 4);
+        const yPct = Math.random() * 100;
+        const delay = Math.random() * 650; // staggered sprinkle
+        const life = 650 + Math.random() * 350;
+        const rot = Math.round(Math.random() * 360);
+        const drift = Math.round(-6 + Math.random() * 12);
+        const color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+
+        s.style.setProperty("--sparkle-size", `${size.toFixed(2)}px`);
+        s.style.setProperty("--sparkle-x", `${xPct.toFixed(2)}%`);
+        s.style.setProperty("--sparkle-y", `${yPct.toFixed(2)}%`);
+        s.style.setProperty("--sparkle-delay", `${Math.round(delay)}ms`);
+        s.style.setProperty("--sparkle-life", `${Math.round(life)}ms`);
+        s.style.setProperty("--sparkle-rot", `${rot}deg`);
+        s.style.setProperty("--sparkle-drift", `${drift}px`);
+        s.style.setProperty("--sparkle-color", color);
+        layer.appendChild(s);
+      }
+
+      win.setTimeout(() => {
+        tab.classList.remove(SPARKLE_CLASS);
+        if (layer.isConnected) layer.remove();
+        if (tab._zenAiSparkleLayer === layer) delete tab._zenAiSparkleLayer;
+      }, totalMs);
     }
 
     function debugLog(...args) {
