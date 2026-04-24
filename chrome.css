@@ -41,8 +41,27 @@
   }
 }
 
+/* Unveil new title left → right, in sync with sparkle wave (duration via --zen-ai-label-reveal-ms) */
+@keyframes zen-ai-label-reveal-ltr {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.88;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
 .tabbrowser-tab.zen-ai-rename-sparkle .tab-label {
-  animation: zen-ai-label-shimmer 1.2s ease-in-out;
+  /* JS sets --zen-ai-label-reveal-ms to track the sparkle sweep */
+  clip-path: inset(0 100% 0 0);
+  animation:
+    zen-ai-label-reveal-ltr var(--zen-ai-label-reveal-ms, 1050ms) cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    zen-ai-label-shimmer 1.25s ease-in-out forwards;
 }
 
 /* Sparkle layer positioned over the label container */
@@ -148,6 +167,7 @@
 @media (prefers-reduced-motion: reduce) {
   .tabbrowser-tab.zen-ai-rename-sparkle .tab-label {
     animation: none !important;
+    clip-path: none !important;
     filter: brightness(1.08);
     transition: filter 0.3s ease;
   }

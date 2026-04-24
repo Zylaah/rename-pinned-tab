@@ -262,12 +262,20 @@
         frag.appendChild(s);
       }
 
+      /* Match text reveal to sparkle wave: dense sweep ~WAVE_MS, trail ~delay+life */
+      const revealMs = Math.min(
+        1400,
+        Math.max(820, Math.round(WAVE_MS * 1.12 + maxFinish * 0.38))
+      );
+      tab.style.setProperty("--zen-ai-label-reveal-ms", `${revealMs}ms`);
+
       layer.appendChild(frag);
       container.appendChild(layer);
 
       const cleanupMs = maxFinish + 100;
       win.setTimeout(() => {
         tab.classList.remove(SPARKLE_CLASS);
+        tab.style.removeProperty("--zen-ai-label-reveal-ms");
         if (layer.isConnected) layer.remove();
         if (tab._zenAiSparkleLayer === layer) delete tab._zenAiSparkleLayer;
       }, cleanupMs);
