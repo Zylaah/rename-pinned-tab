@@ -35,7 +35,7 @@
 
   /**
    * @param {object} utils
-   * @returns {{ name: string, apiKey: string | null, baseUrl: string, model: string, isOllama: boolean, isGemini: boolean }}
+   * @returns {{ name: string, apiKey: string | null, baseUrl: string, model: string, isOllama: boolean, isGemini: boolean, extraHeaders?: Record<string, string> }}
    */
   function resolveProvider(utils) {
     const {
@@ -47,6 +47,9 @@
       OPENAI_API_KEY_PREF,
       OPENAI_MODEL_PREF,
       OPENAI_URL,
+      OPENROUTER_API_KEY_PREF,
+      OPENROUTER_MODEL_PREF,
+      OPENROUTER_URL,
       GEMINI_API_KEY_PREF,
       GEMINI_MODEL_PREF,
       GEMINI_OPENAI_BASE_URL,
@@ -87,6 +90,21 @@
         model: getPref(OPENAI_MODEL_PREF, "gpt-5.3-chat-latest"),
         isOllama: false,
         isGemini: false,
+      };
+    }
+
+    if (id === "openrouter") {
+      return {
+        name: "OpenRouter",
+        apiKey: getPref(OPENROUTER_API_KEY_PREF, ""),
+        baseUrl: OPENROUTER_URL,
+        model: getPref(OPENROUTER_MODEL_PREF, "openai/gpt-4o-mini"),
+        isOllama: false,
+        isGemini: false,
+        extraHeaders: {
+          "HTTP-Referer": "https://zen-browser.app",
+          "X-Title": "Rename Pinned Tab (Zen)",
+        },
       };
     }
 
@@ -137,6 +155,7 @@
     const headers = {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      ...(p.extraHeaders || {}),
     };
 
     const response = await fetch(url, {

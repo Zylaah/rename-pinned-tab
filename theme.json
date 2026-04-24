@@ -1,7 +1,7 @@
 {
   "id": "zen-rename-pinned-tab",
   "name": "Rename Pinned Tab (AI)",
-  "description": "Shorten pinned tab titles with Mistral, OpenAI, Gemini, or local Ollama; Shift+click the tab icon to revert.",
+  "description": "Shorten pinned tab titles with Mistral, OpenAI, OpenRouter, Gemini, or local Ollama; Shift+click the tab icon to revert.",
   "homepage": "https://github.com/YOUR_USERNAME/rename-pinned-tab",
   "readme": "https://raw.githubusercontent.com/YOUR_USERNAME/rename-pinned-tab/main/README.md",
   "style": {

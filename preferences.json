@@ -16,7 +16,7 @@
     "label": "LLM provider",
     "type": "dropdown",
     "defaultValue": "mistral",
-    "description": "Uses the same API shapes as URL Bar LLM: OpenAI-style chat/completions, native Ollama /api/chat, Gemini OpenAI-compatible endpoint.",
+    "description": "Uses the same API shapes as URL Bar LLM: OpenAI-style chat/completions (incl. OpenRouter), native Ollama /api/chat, Gemini OpenAI-compatible endpoint.",
     "options": [
       {
         "value": "mistral",
@@ -25,6 +25,10 @@
       {
         "value": "openai",
         "label": "OpenAI"
+      },
+      {
+        "value": "openrouter",
+        "label": "OpenRouter"
       },
       {
         "value": "ollama",
@@ -166,6 +170,41 @@
         "if": {
           "property": "extensions.zen.rename_pinned_tab.provider",
           "value": "openai"
+        }
+      }
+    ]
+  },
+  {
+    "type": "separator",
+    "label": "OpenRouter"
+  },
+  {
+    "property": "extensions.zen.rename_pinned_tab.openrouter_api_key",
+    "label": "OpenRouter API key",
+    "type": "string",
+    "placeholder": "sk-or-…",
+    "description": "openrouter.ai — OpenAI-compatible /v1/chat/completions. Model id is the OpenRouter slug (e.g. openai/gpt-4o-mini).",
+    "conditions": [
+      {
+        "if": {
+          "property": "extensions.zen.rename_pinned_tab.provider",
+          "value": "openrouter"
+        }
+      }
+    ]
+  },
+  {
+    "property": "extensions.zen.rename_pinned_tab.openrouter_model",
+    "label": "OpenRouter model id",
+    "type": "string",
+    "placeholder": "openai/gpt-4o-mini",
+    "defaultValue": "openai/gpt-4o-mini",
+    "description": "Full model slug from OpenRouter (see openrouter.ai/models).",
+    "conditions": [
+      {
+        "if": {
+          "property": "extensions.zen.rename_pinned_tab.provider",
+          "value": "openrouter"
         }
       }
     ]
