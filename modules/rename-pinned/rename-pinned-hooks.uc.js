@@ -198,10 +198,83 @@
     const SPARKLE_MIN = 16;
     /** ~1 sparkle per 7px width; tune for density vs perf. */
     const SPARKLE_WIDTH_DIVISOR = 7;
+    const SPARKLE_WAVE_MS = 310;
+    /** Keyframe time stops (0–1) aligned with the former CSS @keyframes zen-ai-sparkle-pop. */
+    const SPARKLE_K_T = [0, 0.28, 0.58, 1];
+    const SPARKLE_K_OP = [0, 1, 0.88, 0];
+    const SPARKLE_K_SC = [0, 1.08, 0.82, 0.18];
+    const SPARKLE_K_DX = [-0.15, 0.35, 0.72, 1];
+    const SPARKLE_K_DY = [0, 0.35, 0.72, 1];
+    const SPARKLE_K_RROT = [0, 18, 42, 88];
 
     /**
-     * Sprinkle sparkle particles over the tab label in a left→right wave.
-     * Uses one DocumentFragment append, no per-particle filters, capped count.
+     * @param {number} a
+     * @param {number} b
+     * @param {number} t
+     */
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    /**
+     * Piecewise linear sample over 0..1 (matches old CSS keyframe stops).
+     * @param {number} t 0..1
+     * @param {number[]} stops sorted 0..1
+     * @param {number[]} values same length
+     */
+    function sampleKf(t, stops, values) {
+      if (t <= stops[0]) return values[0];
+      if (t >= stops[stops.length - 1]) return values[values.length - 1];
+      for (let i = 0; i < stops.length - 1; i++) {
+        if (t >= stops[i] && t <= stops[i + 1]) {
+          const u = (t - stops[i]) / (stops[i + 1] - stops[i]);
+          return lerp(values[i], values[i + 1], u);
+        }
+      }
+      return values[values.length - 1];
+    }
+
+    /**
+     * Resolved CSS color for canvas (Zen accent).
+     * @param {Element} el
+     * @returns {string}
+     */
+    function resolveSparkleColor(el) {
+      try {
+        for (const node of [el, document.documentElement]) {
+          if (!node) continue;
+          const c = win.getComputedStyle(node).getPropertyValue("--zen-primary-color").trim();
+          if (c) return c;
+        }
+      } catch (_) {}
+      return "rgb(10, 132, 255)";
+    }
+
+    /**
+     * Cross + core at origin. Caller sets translate / rotate / scale and globalAlpha.
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {number} size CSS px
+     * @param {string} colorCss
+     */
+    function drawSparkleShape(ctx, size, colorCss) {
+      const rayW = Math.max(0.5, size * 0.11);
+      const rayH = size * 0.48;
+      const coreR = size * 0.26;
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, coreR);
+      g.addColorStop(0, colorCss);
+      g.addColorStop(0.6, colorCss);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.beginPath();
+      ctx.arc(0, 0, coreR, 0, Math.PI * 2);
+      ctx.fillStyle = g;
+      ctx.fill();
+      ctx.fillStyle = colorCss;
+      ctx.fillRect(-rayW * 0.5, -rayH, rayW, rayH * 2);
+      ctx.fillRect(-rayH, -rayW * 0.5, rayH * 2, rayW);
+    }
+
+    /**
+     * One canvas + rAF pass for the whole sparkle field (replaces N DOM .zen-ai-sparkle nodes).
      * @param {Element} tab
      */
     function playRenameSparkle(tab) {
@@ -209,14 +282,25 @@
       if (!container) return;
 
       const prev = tab._zenAiSparkleLayer;
-      if (prev?.isConnected) prev.remove();
+      if (prev) {
+        if (prev._zenAiSparkleRaf != null) {
+          win.cancelAnimationFrame(prev._zenAiSparkleRaf);
+          prev._zenAiSparkleRaf = null;
+        }
+        if (prev.isConnected) prev.remove();
+      }
 
       tab.classList.remove(SPARKLE_CLASS);
       tab.classList.add(SPARKLE_CLASS);
 
-      const layer = document.createElement("div");
-      layer.className = "zen-ai-rename-sparkle-layer";
-      tab._zenAiSparkleLayer = layer;
+      if (win.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) {
+        tab.style.setProperty("--zen-ai-label-reveal-ms", "420ms");
+        win.setTimeout(() => {
+          tab.classList.remove(SPARKLE_CLASS);
+          tab.style.removeProperty("--zen-ai-label-reveal-ms");
+        }, 480);
+        return;
+      }
 
       const rect = container.getBoundingClientRect();
       const width = Math.max(48, rect.width || 100);
@@ -226,63 +310,127 @@
         Math.max(SPARKLE_MIN, Math.round(width / SPARKLE_WIDTH_DIVISOR))
       );
 
-      const WAVE_MS = 310;
+      const WAVE_MS = SPARKLE_WAVE_MS;
       let maxFinish = 0;
-      const frag = document.createDocumentFragment();
+
+      /** @type {Array<{ xPct: number, yPct: number, delay: number, life: number, size: number, baseRot: number, driftX: number, driftY: number }>} */
+      const particles = [];
 
       for (let i = 0; i < count; i++) {
-        const s = document.createElement("span");
-        s.className = "zen-ai-sparkle";
-
         const progress = count > 1 ? i / (count - 1) : 0.5;
-        /* Left → right placement with tiny jitter so it stays a wave, not a grid */
         const xPct = 2 + progress * 96 + (Math.random() * 3 - 1.5);
-        /* Two loose rows so it feels fuller without doubling node count arbitrarily */
         const row = i % 2;
         const yPct =
-          row === 0
-            ? 28 + Math.random() * 22
-            : 48 + Math.random() * 24;
-
-        const delay =
-          Math.round(progress * WAVE_MS) + ((Math.random() * 35) | 0);
+          row === 0 ? 28 + Math.random() * 22 : 48 + Math.random() * 24;
+        const delay = Math.round(progress * WAVE_MS) + ((Math.random() * 35) | 0);
         const life = 260 + ((Math.random() * 120) | 0);
         maxFinish = Math.max(maxFinish, delay + life);
 
         const size = 2.5 + Math.random() * 5;
-        const rot = Math.round(Math.random() * 360);
+        const baseRot = (Math.random() * 360 * Math.PI) / 180;
         const driftY = Math.round(-5 + Math.random() * 10);
-        /* Slight rightward drift in keyframes (reading direction) */
         const driftX = Math.round(4 + Math.random() * 10);
 
-        s.style.setProperty("--sparkle-size", `${size.toFixed(2)}px`);
-        s.style.setProperty("--sparkle-x", `${xPct.toFixed(2)}%`);
-        s.style.setProperty("--sparkle-y", `${yPct.toFixed(2)}%`);
-        s.style.setProperty("--sparkle-delay", `${delay}ms`);
-        s.style.setProperty("--sparkle-life", `${life}ms`);
-        s.style.setProperty("--sparkle-rot", `${rot}deg`);
-        s.style.setProperty("--sparkle-drift-y", `${driftY}px`);
-        s.style.setProperty("--sparkle-drift-x", `${driftX}px`);
-        frag.appendChild(s);
+        particles.push({
+          xPct,
+          yPct,
+          delay,
+          life,
+          size,
+          baseRot,
+          driftX,
+          driftY,
+        });
       }
 
-      /* Match text reveal to sparkle wave: dense sweep ~WAVE_MS, trail ~delay+life */
       const revealMs = Math.min(
         700,
         Math.max(410, Math.round(WAVE_MS * 1.12 + maxFinish * 0.38))
       );
       tab.style.setProperty("--zen-ai-label-reveal-ms", `${revealMs}ms`);
 
-      layer.appendChild(frag);
+      const layer = document.createElement("div");
+      layer.className = "zen-ai-rename-sparkle-layer";
+      const canvas = document.createElement("canvas");
+      layer.appendChild(canvas);
+      tab._zenAiSparkleLayer = layer;
       container.appendChild(layer);
 
-      const cleanupMs = maxFinish + 50;
-      win.setTimeout(() => {
-        tab.classList.remove(SPARKLE_CLASS);
-        tab.style.removeProperty("--zen-ai-label-reveal-ms");
-        if (layer.isConnected) layer.remove();
-        if (tab._zenAiSparkleLayer === layer) delete tab._zenAiSparkleLayer;
-      }, cleanupMs);
+      const colorCss = resolveSparkleColor(tab);
+      const dpr = win.devicePixelRatio || 1;
+
+      const t0 = win.performance?.now() ?? win.Date.now();
+      const totalMs = maxFinish + 50;
+
+      function sizeCanvas() {
+        const w = layer.clientWidth || 1;
+        const h = layer.clientHeight || 1;
+        const pw = Math.max(1, Math.round(w * dpr));
+        const ph = Math.max(1, Math.round(h * dpr));
+        if (canvas.width !== pw || canvas.height !== ph) {
+          canvas.width = pw;
+          canvas.height = ph;
+        }
+        return { cw: w, ch: h };
+      }
+
+      function frame() {
+        const now = (win.performance?.now() ?? win.Date.now()) - t0;
+        if (now >= totalMs) {
+          layer._zenAiSparkleRaf = null;
+          tab.classList.remove(SPARKLE_CLASS);
+          tab.style.removeProperty("--zen-ai-label-reveal-ms");
+          if (layer.isConnected) layer.remove();
+          if (tab._zenAiSparkleLayer === layer) {
+            delete tab._zenAiSparkleLayer;
+          }
+          return;
+        }
+
+        const { cw, ch } = sizeCanvas();
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          layer._zenAiSparkleRaf = null;
+          if (tab._zenAiSparkleLayer === layer) delete tab._zenAiSparkleLayer;
+          layer.remove();
+          tab.classList.remove(SPARKLE_CLASS);
+          return;
+        }
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.scale(dpr, dpr);
+
+        for (const p of particles) {
+          const age = now - p.delay;
+          if (age < 0) continue;
+          const tNorm = Math.min(1, Math.max(0, age / p.life));
+          const op = sampleKf(tNorm, SPARKLE_K_T, SPARKLE_K_OP);
+          if (op <= 0.001) continue;
+          const sc = sampleKf(tNorm, SPARKLE_K_T, SPARKLE_K_SC);
+          if (sc <= 0) continue;
+          const fdx = sampleKf(tNorm, SPARKLE_K_T, SPARKLE_K_DX);
+          const fdy = sampleKf(tNorm, SPARKLE_K_T, SPARKLE_K_DY);
+          const rAdd = (sampleKf(tNorm, SPARKLE_K_T, SPARKLE_K_RROT) * Math.PI) / 180;
+
+          const xBase = (p.xPct / 100) * cw;
+          const yBase = (p.yPct / 100) * ch;
+          const px = xBase + p.driftX * fdx;
+          const py = yBase + p.driftY * fdy;
+
+          ctx.save();
+          ctx.globalAlpha = op;
+          ctx.translate(px, py);
+          ctx.rotate(p.baseRot + rAdd);
+          ctx.scale(sc, sc);
+          drawSparkleShape(ctx, p.size, colorCss);
+          ctx.restore();
+        }
+
+        layer._zenAiSparkleRaf = win.requestAnimationFrame(frame);
+      }
+
+      layer._zenAiSparkleRaf = win.requestAnimationFrame(frame);
     }
 
     function debugLog(...args) {

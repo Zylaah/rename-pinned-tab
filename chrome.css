@@ -95,93 +95,14 @@
   pointer-events: none;
   overflow: visible;
   z-index: 3;
-  /* Avoid paint containment so sparkles aren’t clipped; layout helps reflow isolation */
+  /* Single canvas: layout isolation without clipping the burst */
   contain: layout;
 }
 
-/* Individual sparkle particle: 4-point twinkle built with two crossed
-   radial gradients, rotated and scaled in. */
-.zen-ai-sparkle {
-  --sparkle-size: 6px;
-  --sparkle-x: 50%;
-  --sparkle-y: 50%;
-  --sparkle-delay: 0ms;
-  --sparkle-life: 800ms;
-  --sparkle-rot: 0deg;
-  --sparkle-drift-y: 0px;
-  --sparkle-drift-x: 8px;
-  /* Zen workspace / theme accent (inherits from chrome) */
-  --sparkle-color: var(--zen-primary-color, AccentColor);
-
-  position: absolute;
-  left: var(--sparkle-x);
-  top: var(--sparkle-y);
-  width: var(--sparkle-size);
-  height: var(--sparkle-size);
-  margin-left: calc(var(--sparkle-size) / -2);
-  margin-top: calc(var(--sparkle-size) / -2);
-  opacity: 0;
-  border-radius: 1px;
-  transform: translate3d(0, 0, 0) scale(0) rotate(var(--sparkle-rot));
-  /* Cheaper than filter: drop-shadow on dozens of nodes */
-  box-shadow: 0 0 2px 0.5px color-mix(in srgb, var(--sparkle-color) 65%, transparent);
-  animation: zen-ai-sparkle-pop var(--sparkle-life) cubic-bezier(0.22, 1, 0.36, 1)
-    var(--sparkle-delay) forwards;
-  background:
-    /* vertical ray */
-    linear-gradient(
-        to bottom,
-        transparent 0%,
-        var(--sparkle-color) 50%,
-        transparent 100%
-      )
-      no-repeat 50% 0 / 22% 100%,
-    /* horizontal ray */
-      linear-gradient(
-        to right,
-        transparent 0%,
-        var(--sparkle-color) 50%,
-        transparent 100%
-      )
-      no-repeat 0 50% / 100% 22%,
-    /* soft core */
-      radial-gradient(
-        closest-side,
-        color-mix(in srgb, var(--sparkle-color) 85%, white) 0%,
-        transparent 70%
-      )
-      no-repeat 50% 50% / 55% 55%;
-}
-
-@keyframes zen-ai-sparkle-pop {
-  0% {
-    opacity: 0;
-    transform: translate3d(calc(var(--sparkle-drift-x) * -0.15), 0, 0) scale(0)
-      rotate(var(--sparkle-rot));
-  }
-  28% {
-    opacity: 1;
-    transform: translate3d(
-        calc(var(--sparkle-drift-x) * 0.35),
-        calc(var(--sparkle-drift-y) * 0.35),
-        0
-      )
-      scale(1.08) rotate(calc(var(--sparkle-rot) + 18deg));
-  }
-  58% {
-    opacity: 0.88;
-    transform: translate3d(
-        calc(var(--sparkle-drift-x) * 0.72),
-        calc(var(--sparkle-drift-y) * 0.72),
-        0
-      )
-      scale(0.82) rotate(calc(var(--sparkle-rot) + 42deg));
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(var(--sparkle-drift-x), var(--sparkle-drift-y), 0)
-      scale(0.18) rotate(calc(var(--sparkle-rot) + 88deg));
-  }
+.zen-ai-rename-sparkle-layer canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -197,8 +118,8 @@
     filter: brightness(1.08);
     transition: filter 0.3s ease;
   }
-  .zen-ai-sparkle {
-    animation: none !important;
-    opacity: 0 !important;
+
+  .zen-ai-rename-sparkle-layer {
+    display: none !important;
   }
 }
