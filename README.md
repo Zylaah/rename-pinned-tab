@@ -42,7 +42,6 @@
 - **Revert** — **Shift+click** the tab icon to restore the original (or switch to Alt or Meta in prefs). After a short window, the new title sticks.
 - **Tunables** — Enable/disable, provider, model, Ollama URL, debug logging, and how you like to trigger revert.
 
----
 
 ## Get it
 
