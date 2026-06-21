@@ -12,13 +12,11 @@
   <p>Pin. Shorten. Move on. Your model picks a title that fits the strip—<br>and you can always bring the long one back with a single modifier-click on the icon.</p>
 </div>
 
----
 
 ## A calmer strip
 
 <p align="left">Pinned tabs shouldn’t read like a paragraph. In Zen’s layout especially, a giant title fights for space and attention.<br><br>This mod asks an LLM for a tighter label the moment you pin.</p>
 
----
 
 ## See it in action
 
