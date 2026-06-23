@@ -24,7 +24,7 @@
   <tr>
     <td width="50%">
       <h3>Pin, rename, keep browsing</h3>
-      <img width="1920" height="1018" alt="Cap 2026-06-23 at 12 31 42" src="https://github.com/user-attachments/assets/ed448a73-2d48-41b4-bfbf-94c49b9587ab" alt="Pin, rename, keep browsing"/>
+      <img width="50%" height="50%" alt="Cap 2026-06-23 at 12 31 42" src="https://github.com/user-attachments/assets/ed448a73-2d48-41b4-bfbf-94c49b9587ab" alt="Pin, rename, keep browsing"/>
     </td>
     <td width="50%">
       <h3>Undo without drama</h3>
