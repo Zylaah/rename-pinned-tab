@@ -24,11 +24,11 @@
   <tr>
     <td width="50%">
       <h3>Pin, rename, keep browsing</h3>
-      <img width="80%" height="80%" alt="Cap 2026-06-23 at 12 31 42" src="https://github.com/user-attachments/assets/ed448a73-2d48-41b4-bfbf-94c49b9587ab" alt="Pin, rename, keep browsing"/>
+      <img width="100%" height="100%" alt="Cap 2026-06-23 at 12 31 42" src="https://github.com/user-attachments/assets/ed448a73-2d48-41b4-bfbf-94c49b9587ab" alt="Pin, rename, keep browsing"/>
     </td>
     <td width="50%">
       <h3>Undo without drama</h3>
-      <img width="80%" height="80%" alt="Cap 2026-06-23 at 12 26 58" src="https://github.com/user-attachments/assets/e973b039-1ab8-400e-afeb-41144f7b9b9a" alt="Pin, rename, keep browsing"/>
+      <img width="100%" height="100%" alt="Cap 2026-06-23 at 12 26 58" src="https://github.com/user-attachments/assets/e973b039-1ab8-400e-afeb-41144f7b9b9a" alt="Pin, rename, keep browsing"/>
     </td>
   </tr>
 </table>
