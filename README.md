@@ -28,7 +28,7 @@
     </td>
     <td width="50%">
       <h3>Undo without drama</h3>
-      <img width="1920" height="1018" alt="Cap 2026-06-23 at 12 26 58" src="https://github.com/user-attachments/assets/e973b039-1ab8-400e-afeb-41144f7b9b9a" alt="Pin, rename, keep browsing"/>
+      <img width="50%" height="50%" alt="Cap 2026-06-23 at 12 26 58" src="https://github.com/user-attachments/assets/e973b039-1ab8-400e-afeb-41144f7b9b9a" alt="Pin, rename, keep browsing"/>
     </td>
   </tr>
 </table>
