@@ -46,5 +46,4 @@
 1. Install **Sine** if you don’t already have it  
    https://github.com/CosmoCreeper/Sine
 2. Open **Settings → Sine Mods** (or **Cosine**)
-3. Enable installing JS from unofficial sources from Sine's settings.
-4. paste Zylaah/tidy-pinned-tabs and press install.
+3. Search for Tidy Pinned Tabs and install it. Or you can find it in the Store : <a href="https://sineorg.github.io/store/">Here</a>
