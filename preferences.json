@@ -320,7 +320,7 @@
     "label": "Firefox AI task",
     "type": "dropdown",
     "defaultValue": "text2text-generation",
-    "description": "Requires browser.ml.enable=true. First pin may download a model into the browser cache. Prefer text2text-generation for short labels.",
+    "description": "Zen disables browser.ml.enable by default; the mod turns it on when you pin. First pin may download a model into the browser cache. Prefer text2text-generation for short labels.",
     "options": [
       {
         "value": "text2text-generation",

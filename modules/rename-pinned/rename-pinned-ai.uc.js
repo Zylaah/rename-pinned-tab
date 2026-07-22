@@ -469,12 +469,38 @@
     const { utils } = deps;
     const {
       getPref,
+      setBoolPref,
       createDebugLog,
       redactSensitiveData,
       PINNED_TAB_SYSTEM_PROMPT,
       DEBUG_PREF,
       BROWSER_ML_ENABLE_PREF,
     } = utils;
+
+    /**
+     * Zen defaults browser.ml.enable to false. Selecting Mozilla Local opts in.
+     * @returns {boolean}
+     */
+    function ensureMozillaMlEnabled() {
+      if (getPref(BROWSER_ML_ENABLE_PREF, false)) return true;
+      if (typeof setBoolPref !== "function") {
+        console.warn(
+          "[Rename Pinned Tab] Mozilla Local requires browser.ml.enable=true (Zen disables it by default)."
+        );
+        return false;
+      }
+      const ok = setBoolPref(BROWSER_ML_ENABLE_PREF, true);
+      if (ok) {
+        console.info(
+          "[Rename Pinned Tab] Enabled browser.ml.enable for Mozilla Local (Zen default is off)."
+        );
+      } else {
+        console.warn(
+          "[Rename Pinned Tab] Could not set browser.ml.enable=true — set it manually in about:config."
+        );
+      }
+      return ok && getPref(BROWSER_ML_ENABLE_PREF, false);
+    }
 
     /**
      * @param {object} params
@@ -488,14 +514,14 @@
       const debugLog = createDebugLog(debug);
 
       const provider = resolveProvider(utils);
+      debugLog("provider:", provider.name, {
+        isMozillaLocal: !!provider.isMozillaLocal,
+        model: provider.model,
+        taskName: provider.taskName,
+      });
 
       if (provider.isMozillaLocal) {
-        if (!getPref(BROWSER_ML_ENABLE_PREF, false)) {
-          console.warn(
-            "[Rename Pinned Tab] Mozilla Local requires browser.ml.enable=true in about:config"
-          );
-          return null;
-        }
+        if (!ensureMozillaMlEnabled()) return null;
       } else if (!provider.isOllama && (!provider.apiKey || provider.apiKey.length < 10)) {
         console.warn(`[Rename Pinned Tab] Missing or invalid API key (${provider.name})`);
         return null;

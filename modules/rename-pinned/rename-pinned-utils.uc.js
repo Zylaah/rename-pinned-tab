@@ -87,9 +87,18 @@ JSON keys must be \`filtered\` and \`rewritten\`. No markdown outside the JSON o
   function getPref(prefName, defaultValue) {
     try {
       const branch = _prefBranch;
-      if (!branch) return defaultValue;
+      if (!branch || !prefName) return defaultValue;
       if (typeof defaultValue === "boolean") {
-        return branch.getBoolPref(prefName, defaultValue);
+        try {
+          return branch.getBoolPref(prefName, defaultValue);
+        } catch (_) {
+          // Older builds: no default-arg form.
+          try {
+            return branch.getBoolPref(prefName);
+          } catch {
+            return defaultValue;
+          }
+        }
       }
       if (typeof defaultValue === "string") {
         return branch.getStringPref(prefName, defaultValue);
@@ -101,6 +110,23 @@ JSON keys must be \`filtered\` and \`rewritten\`. No markdown outside the JSON o
     } catch (e) {
       console.error("[Rename Pinned Tab] getPref:", e);
       return defaultValue;
+    }
+  }
+
+  /**
+   * @param {string} prefName
+   * @param {boolean} value
+   * @returns {boolean} Whether the write succeeded
+   */
+  function setBoolPref(prefName, value) {
+    try {
+      const branch = _prefBranch;
+      if (!branch || !prefName) return false;
+      branch.setBoolPref(prefName, !!value);
+      return true;
+    } catch (e) {
+      console.error("[Rename Pinned Tab] setBoolPref:", e);
+      return false;
     }
   }
 
@@ -151,6 +177,7 @@ JSON keys must be \`filtered\` and \`rewritten\`. No markdown outside the JSON o
     MOZILLA_ENGINE_ID,
     PINNED_TAB_SYSTEM_PROMPT,
     getPref,
+    setBoolPref,
     createDebugLog,
     redactSensitiveData,
   };
