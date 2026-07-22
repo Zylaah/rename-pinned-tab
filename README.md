@@ -36,9 +36,9 @@
 **What you get**
 
 - **Pin to rename** — With the mod on, a short title comes back from the provider you choose, with a bit of on-tab feedback so you know it landed.
-- **Your stack** — Mistral, OpenAI, OpenRouter, Gemini, or **Ollama** at home. Keys live in preferences; Ollama stays on your machine.
+- **Your stack** — Mistral, OpenAI, OpenRouter, Gemini, **Ollama** at home, or experimental **Mozilla Local** (Firefox on-device AI Runtime; needs `browser.ml.enable`). Keys live in preferences; Ollama and Mozilla stay on your machine.
 - **Revert** — **Shift+click** the tab icon to restore the original (or switch to Alt or Meta in prefs). After a short window, the new title sticks.
-- **Tunables** — Enable/disable, provider, model, Ollama URL, debug logging, and how you like to trigger revert.
+- **Tunables** — Enable/disable, provider, model, Ollama URL, Mozilla task/model/device, debug logging, and how you like to trigger revert.
 
 
 ## Get it

@@ -2,7 +2,7 @@
   "id": "zen-tidy-pinned-tabs",
   "name": "Tidy Pinned Tabs",
   "author": "Zylaah",
-  "description": "Shorten pinned tab titles with Mistral, OpenAI, OpenRouter, Gemini, or local Ollama; Shift+click the tab icon to revert.",
+  "description": "Shorten pinned tab titles with Mistral, OpenAI, OpenRouter, Gemini, local Ollama, or Firefox on-device AI (experimental); Shift+click the tab icon to revert.",
   "homepage": "https://github.com/Zylaah/tidy-pinned-tabs",
   "readme": "https://raw.githubusercontent.com/Zylaah/tidy-pinned-tabs/main/README.md",
   "style": {

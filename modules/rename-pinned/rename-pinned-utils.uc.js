@@ -17,7 +17,7 @@
   const MODEL_PREF = "extensions.zen.rename_pinned_tab.mistral_model";
   const REVERT_MODIFIER_PREF = "extensions.zen.rename_pinned_tab.revert_modifier";
 
-  /** @typedef {"mistral"|"openai"|"openrouter"|"ollama"|"gemini"} RenamePinnedProviderId */
+  /** @typedef {"mistral"|"openai"|"openrouter"|"ollama"|"gemini"|"mozilla"} RenamePinnedProviderId */
 
   const PROVIDER_PREF = "extensions.zen.rename_pinned_tab.provider";
   const OPENAI_API_KEY_PREF = "extensions.zen.rename_pinned_tab.openai_api_key";
@@ -28,12 +28,21 @@
   const GEMINI_MODEL_PREF = "extensions.zen.rename_pinned_tab.gemini_model";
   const OLLAMA_BASE_URL_PREF = "extensions.zen.rename_pinned_tab.ollama_base_url";
   const OLLAMA_MODEL_PREF = "extensions.zen.rename_pinned_tab.ollama_model";
+  const MOZILLA_TASK_PREF = "extensions.zen.rename_pinned_tab.mozilla_task";
+  const MOZILLA_MODEL_PREF = "extensions.zen.rename_pinned_tab.mozilla_model";
+  const MOZILLA_DEVICE_PREF = "extensions.zen.rename_pinned_tab.mozilla_device";
+  const BROWSER_ML_ENABLE_PREF = "browser.ml.enable";
 
   const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
   const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
   const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
   const GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/";
   const DEFAULT_OLLAMA_CHAT_URL = "http://localhost:11434/api/chat";
+  const DEFAULT_MOZILLA_TASK = "text2text-generation";
+  const DEFAULT_MOZILLA_MODEL = "Xenova/flan-t5-small";
+  const DEFAULT_MOZILLA_DEVICE = "wasm";
+  /** Unique engine id so Firefox features do not reuse/destroy this pipeline. */
+  const MOZILLA_ENGINE_ID = "zen-tidy-pinned-tabs";
 
   /** System prompt (from project ai prompt.txt — keep in sync). */
   const PINNED_TAB_SYSTEM_PROMPT = `You are an expert editor who shortens browser tab titles. You are not a cross-language translator for this task.
@@ -127,11 +136,19 @@ JSON keys must be \`filtered\` and \`rewritten\`. No markdown outside the JSON o
     GEMINI_MODEL_PREF,
     OLLAMA_BASE_URL_PREF,
     OLLAMA_MODEL_PREF,
+    MOZILLA_TASK_PREF,
+    MOZILLA_MODEL_PREF,
+    MOZILLA_DEVICE_PREF,
+    BROWSER_ML_ENABLE_PREF,
     MISTRAL_URL,
     OPENAI_URL,
     OPENROUTER_URL,
     GEMINI_OPENAI_BASE_URL,
     DEFAULT_OLLAMA_CHAT_URL,
+    DEFAULT_MOZILLA_TASK,
+    DEFAULT_MOZILLA_MODEL,
+    DEFAULT_MOZILLA_DEVICE,
+    MOZILLA_ENGINE_ID,
     PINNED_TAB_SYSTEM_PROMPT,
     getPref,
     createDebugLog,

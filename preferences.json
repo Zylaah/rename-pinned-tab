@@ -16,7 +16,7 @@
     "label": "LLM provider",
     "type": "dropdown",
     "defaultValue": "mistral",
-    "description": "Uses the same API shapes as URL Bar LLM: OpenAI-style chat/completions (incl. OpenRouter), native Ollama /api/chat, Gemini OpenAI-compatible endpoint.",
+    "description": "Uses the same API shapes as URL Bar LLM: OpenAI-style chat/completions (incl. OpenRouter), native Ollama /api/chat, Gemini OpenAI-compatible endpoint, or Firefox on-device AI Runtime (experimental).",
     "options": [
       {
         "value": "mistral",
@@ -37,6 +37,10 @@
       {
         "value": "gemini",
         "label": "Google Gemini"
+      },
+      {
+        "value": "mozilla",
+        "label": "Mozilla Local (experimental)"
       }
     ],
     "conditions": [
@@ -303,6 +307,80 @@
         "if": {
           "property": "extensions.zen.rename_pinned_tab.provider",
           "value": "ollama"
+        }
+      }
+    ]
+  },
+  {
+    "type": "separator",
+    "label": "Mozilla Local"
+  },
+  {
+    "property": "extensions.zen.rename_pinned_tab.mozilla_task",
+    "label": "Firefox AI task",
+    "type": "dropdown",
+    "defaultValue": "text2text-generation",
+    "description": "Requires browser.ml.enable=true. First pin may download a model into the browser cache. Prefer text2text-generation for short labels.",
+    "options": [
+      {
+        "value": "text2text-generation",
+        "label": "text2text-generation (recommended)"
+      },
+      {
+        "value": "summarization",
+        "label": "summarization"
+      },
+      {
+        "value": "text-generation",
+        "label": "text-generation"
+      }
+    ],
+    "conditions": [
+      {
+        "if": {
+          "property": "extensions.zen.rename_pinned_tab.provider",
+          "value": "mozilla"
+        }
+      }
+    ]
+  },
+  {
+    "property": "extensions.zen.rename_pinned_tab.mozilla_model",
+    "label": "Model id",
+    "type": "string",
+    "placeholder": "Xenova/flan-t5-small",
+    "defaultValue": "Xenova/flan-t5-small",
+    "description": "Hugging Face id from an allow-listed org (e.g. Xenova/flan-t5-small, Xenova/distilbart-cnn-6-6).",
+    "conditions": [
+      {
+        "if": {
+          "property": "extensions.zen.rename_pinned_tab.provider",
+          "value": "mozilla"
+        }
+      }
+    ]
+  },
+  {
+    "property": "extensions.zen.rename_pinned_tab.mozilla_device",
+    "label": "Inference device",
+    "type": "dropdown",
+    "defaultValue": "wasm",
+    "description": "wasm is the safest default. gpu may be faster when available.",
+    "options": [
+      {
+        "value": "wasm",
+        "label": "WASM"
+      },
+      {
+        "value": "gpu",
+        "label": "GPU"
+      }
+    ],
+    "conditions": [
+      {
+        "if": {
+          "property": "extensions.zen.rename_pinned_tab.provider",
+          "value": "mozilla"
         }
       }
     ]
