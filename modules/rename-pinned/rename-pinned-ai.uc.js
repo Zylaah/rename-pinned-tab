@@ -84,25 +84,57 @@
     }
   }
 
+  /** Reject model echoes of instructions / meta text. */
+  const PROMPT_ECHO_RE =
+    /expert editor|cross-language|tab titles?|bookmarking|return json|filtered|rewritten|system prompt|shorten this browser|output only|do not translate/i;
+
   /**
    * Small local models often skip JSON; accept a plain short label.
    * @param {string} raw
+   * @param {{ originalTitle?: string }} [opts]
    * @returns {string | null}
    */
-  function coercePlainLabel(raw) {
+  function coercePlainLabel(raw, opts = {}) {
     if (!raw || typeof raw !== "string") return null;
     let s = raw.trim();
     const fence = s.match(/```(?:json|text)?\s*([\s\S]*?)```/);
     if (fence) s = fence[1].trim();
-    s = s
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .find((line) => line && !line.startsWith("{") && !/^```/.test(line)) || s.split(/\r?\n/)[0] || "";
+    s =
+      s
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .find((line) => line && !line.startsWith("{") && !/^```/.test(line)) ||
+      s.split(/\r?\n/)[0] ||
+      "";
     s = s.replace(/^["'`]+|["'`]+$/g, "").trim();
     s = s.replace(/^(?:rewritten|title|label)\s*[:=]\s*/i, "").trim();
-    if (!s || s.length > 120) return null;
-    if (/^[\{\[]/.test(s)) return null;
+    if (!s || /^[\{\[]/.test(s)) return null;
+    // 1–3 words target; allow a little slack, never essay-length.
+    if (s.length > 48) return null;
+    const words = s.split(/\s+/).filter(Boolean);
+    if (words.length === 0 || words.length > 6) return null;
+    if (PROMPT_ECHO_RE.test(s)) return null;
+    const original = (opts.originalTitle || "").trim();
+    if (original && s.toLowerCase() === original.toLowerCase()) return null;
+    // Echo of the instruction prefix (seen with flan-t5 on long prompts).
+    if (/^you are an /i.test(s)) return null;
     return s;
+  }
+
+  /**
+   * Compact instruction for small on-device models (Flan-T5 etc.).
+   * Long chat/system prompts cause these models to echo the instructions.
+   * @param {string} title
+   * @param {string} [taskName]
+   * @returns {string}
+   */
+  function buildMozillaPrompt(title, taskName) {
+    const clean = String(title || "").trim();
+    if (taskName === "summarization") {
+      return `Summarize this browser tab title in 1 to 3 words. Keep the same language. Title: ${clean}`;
+    }
+    // text2text-generation / text-generation
+    return `Shorten this browser tab title to 1-3 words. Keep the same language. Output only the short title, nothing else.\n\n${clean}`;
   }
 
   /**
@@ -151,26 +183,6 @@
   }
 
   /**
-   * Flatten chat messages into a single prompt for Transformers.js pipelines.
-   * @param {Array<{ role: string, content: string }>} messages
-   * @returns {string}
-   */
-  function messagesToMozillaPrompt(messages) {
-    const system = messages.find((m) => m.role === "system")?.content?.trim() || "";
-    const user = messages.find((m) => m.role === "user")?.content?.trim() || "";
-    // Compact instruction style works better for small T5-family models.
-    return [
-      system,
-      "",
-      user,
-      "",
-      "Reply with JSON only: {\"filtered\":\"...\",\"rewritten\":\"...\"}",
-    ]
-      .join("\n")
-      .trim();
-  }
-
-  /**
    * @param {object} p
    * @param {AbortSignal} [signal]
    * @returns {Promise<object>}
@@ -206,11 +218,11 @@
 
   /**
    * @param {object} p
-   * @param {Array<{ role: string, content: string }>} messages
+   * @param {string} prompt
    * @param {AbortSignal} [signal]
    * @returns {Promise<string>}
    */
-  async function completeMozilla(p, messages, signal) {
+  async function completeMozilla(p, prompt, signal) {
     if (signal?.aborted) {
       throw new DOMException("Aborted", "AbortError");
     }
@@ -229,10 +241,10 @@
       throw new DOMException("Aborted", "AbortError");
     }
 
-    const prompt = messagesToMozillaPrompt(messages);
     const request = {
       args: [prompt],
-      options: { max_new_tokens: 96 },
+      // Keep short so instruction-echo cannot become a full tab title.
+      options: { max_new_tokens: 24 },
     };
 
     let res;
@@ -381,11 +393,18 @@
    * @param {object} p
    * @param {Array<{ role: string, content: string }>} messages
    * @param {AbortSignal} [signal]
+   * @param {{ mozillaPrompt?: string }} [opts]
    * @returns {Promise<string>}
    */
-  async function completeChat(p, messages, signal) {
+  async function completeChat(p, messages, signal, opts = {}) {
     if (p.isMozillaLocal) {
-      return completeMozilla(p, messages, signal);
+      const prompt =
+        opts.mozillaPrompt ||
+        buildMozillaPrompt(
+          messages.find((m) => m.role === "user")?.content || "",
+          p.taskName
+        );
+      return completeMozilla(p, prompt, signal);
     }
 
     const { apiKey, baseUrl, model, isOllama, isGemini } = p;
@@ -541,19 +560,30 @@
         { role: "user", content: userContent },
       ];
 
+      const mozillaPrompt = provider.isMozillaLocal
+        ? buildMozillaPrompt(title, provider.taskName)
+        : undefined;
+
       try {
-        const raw = await completeChat(provider, messages, signal);
+        const raw = await completeChat(provider, messages, signal, { mozillaPrompt });
         debugLog(`${provider.name} raw:`, raw);
+        if (mozillaPrompt) debugLog("Mozilla Local prompt:", mozillaPrompt);
 
         const parsed = parseJsonResponse(raw);
         let label = parsed?.rewritten?.replace(/^["'\s]+|["'\s]+$/g, "").trim() || "";
 
+        if (label && PROMPT_ECHO_RE.test(label)) {
+          debugLog("Rejected JSON rewritten (prompt echo)");
+          label = "";
+        }
+
         if (!label && provider.isMozillaLocal) {
-          label = coercePlainLabel(raw) || "";
+          label = coercePlainLabel(raw, { originalTitle: title }) || "";
           if (label) debugLog("Mozilla Local used plain-text fallback label");
         }
 
         if (!label || label.length > 120) return null;
+        if (PROMPT_ECHO_RE.test(label) || /^you are an /i.test(label)) return null;
         return label;
       } catch (e) {
         const msg = e instanceof Error ? redactSensitiveData(e.message) : String(e);
